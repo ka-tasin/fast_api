@@ -108,6 +108,28 @@ def get_person():
             conn.close()        
 
 
+@app.get("/persons/{person_id}", response_model=Person)
+def get_one_person(person_id: int):
+    try:
+        conn = getDBconnection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("SELECT * FROM  persons WHERE id = %s", (person_id,))
+        person = cursor.fetchone()
+
+        if not person:
+            raise HTTPException(status_code=404, detail="Person not found") 
+        
+        return Person(**person)
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    finally:
+        if conn:
+            cursor.close()
+            conn.close()
+
+
 
 
 
