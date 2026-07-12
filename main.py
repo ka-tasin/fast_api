@@ -30,8 +30,17 @@ def addPerson(person: Person):
 def updatePerson(person_id: int, updatedPerson: Person):
     for index, person in enumerate(persons):
         if person.id == person_id:
-            person[index] = updatedPerson
+            persons[index] = updatedPerson
             return updatePerson
     
     return {"message": "Person not found"}
+
+@app.delete("/persons/{person_id}")
+def deletePerson(person_id):
+    for index, person in enumerate(persons):
+        if person_id == person.id:
+            deletedPerson = persons.pop(index)
+            return deletedPerson
+        
+    return {"message": "Person not found. Delete failed"}
 
