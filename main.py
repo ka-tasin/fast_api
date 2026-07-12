@@ -1,13 +1,50 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
+import psycopg2 
+from psycopg2.extras import RealDictCursor
+from dotenv import load_dotenv
+import os
 
 app = FastAPI()
+
+load_dotenv()
+
+database_url = os.getenv("DATABASE_URL")
+
+class PersonCreate(BaseModel):
+    name: str
+    age: int
 
 class Person(BaseModel):
     id: int
     name: str
     age: int
+
+class PersonUpdate(BaseModel):
+    name: str
+    age: int
+
+
+def getDBconnection():
+    return psycopg2.connect(database_url)
+
+def init_database():
+    try:
+        conn = getDBconnection()
+        cursor = conn.cursor()
+
+        conn.commit()
+        print("Database connected successfully")
+    
+    except Exception as e:
+        print("Database initialization failed")
+    
+    finally:
+        if conn:
+            cursor.close()
+            conn.close()
+
 
 
 persons: List[Person] = []
