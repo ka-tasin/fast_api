@@ -130,6 +130,54 @@ def get_one_person(person_id: int):
             conn.close()
 
 
+@app.put("/person/{person_id}", response_model=Person)
+def update_person(person_id: int, updated_person: PersonUpdate):
+    try:
+        conn = getDBconnection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("SELECT * FROM persons WHERE id = %s", (person_id))
+        existing_person = cursor.fetchone()
+
+        if not existing_person:
+            raise HTTPException(status_code=400, detail='Person not found')
+        
+        update_fields = []
+        params = []
+
+        if updated_person.name is not None:
+            update_fields.append("name = %s")
+            params.append(updated_person.name)
+        
+        if updated_person.age is not None:
+            update_fields.append("age = %s")
+            params.append(updated_person.age)
+        
+        if not update_fields:
+            # No fields to update, return existing person
+            return Person(**existing_person) 
+    
+        params.append(person_id)
+        query = f"UPDATE persons SET {','.join(update_fields)} WHERE id = %s RETURNING *"
+
+        cursor.execute(query, params)
+        updated = cursor.fetchone()
+        conn.commit()
+
+        return Person(**updated)
+    
+    except HTTPException:
+        raise
+    except HTTPException as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    finally:
+        if conn:
+            cursor.close()
+            conn.close()
+    
+
+
+
 
 
 
