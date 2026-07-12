@@ -88,4 +88,27 @@ def create_person(person: Person):
                 conn.close()
 
 
+@app.get("/persons", response_model=List[Person])
+def get_person():
+    try:
+        conn = getDBconnection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("SELECT * FROM persons ORDER BY id")
+
+        persons = cursor.fetchall()
+
+        return [Person(**person) for person in persons]
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")    
+    finally:
+        if conn:
+            cursor.close()
+            conn.close()        
+
+
+
+
+
 
