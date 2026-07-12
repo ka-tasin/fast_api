@@ -177,6 +177,38 @@ def update_person(person_id: int, updated_person: PersonUpdate):
     
 
 
+@app.delete("/person/{person_id}")
+def delete_person(person_id: int):
+    try:
+        conn = getDBconnection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("SELECT * FROM persons WHERE id = %s", (person_id,))
+        existing_person = cursor.fetchone()
+
+        if not existing_person:
+            raise HTTPException(status_code=400, detail="Person not found")
+        
+        cursor.execute("DELETE FROM persons WHERE id = %s RETURNING *", (person_id,))
+        deleted_person = cursor.fetchone()
+        conn.commit()
+
+        return {
+            "message": "Person deleted successfully",
+            "deleted_person": Person(**deleted_person)
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    finally:
+        if conn:
+            cursor.close()
+            conn.close()
+
+
+
 
 
 
