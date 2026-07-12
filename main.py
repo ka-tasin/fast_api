@@ -5,8 +5,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 import os
-
-app = FastAPI()
+from contextlib import asynccontextmanager
 
 load_dotenv()
 
@@ -47,37 +46,46 @@ def init_database():
 
 
 
-persons: List[Person] = []
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Starting up...")
+
+    init_database()
+    yield
+
+    print("Shutting down...")
 
 
-@app.get('/')
-def getPerson():
-    return {"message": "Welcome to person route"}
+app = FastAPI(lifespan=lifespan)
 
-@app.get("/persons")
-def getAllPerson():
-    return persons
 
-@app.post("/persons")
-def addPerson(person: Person):
-    persons.append(person)
-    return persons
+@app.get("/")
+def get_root():
+    return {"message": "Welcome to person application"}
 
-@app.put("/persons/{person_id}")
-def updatePerson(person_id: int, updatedPerson: Person):
-    for index, person in enumerate(persons):
-        if person.id == person_id:
-            persons[index] = updatedPerson
-            return updatePerson
-    
-    return {"message": "Person not found"}
 
-@app.delete("/persons/{person_id}")
-def deletePerson(person_id):
-    for index, person in enumerate(persons):
-        if person_id == person.id:
-            deletedPerson = persons.pop(index)
-            return deletedPerson
+@app.post("/persons", response_model=Person)
+def create_person(person: Person):
+        try: 
+            conn = getDBconnection()
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+            cursor.execute(
+                "INSERT INTO persons (name, age) VALUES (%s, %s) RETURNING *",
+                (person.name, person.age)
+            )
+
+            new_person = cursor.fetchone()
+            conn.commit()
+
+            return Person(**new_person)
         
-    return {"message": "Person not found. Delete failed"}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")            
+        finally:
+            if conn:
+                cursor.close()
+                conn.close()
+
+
 
