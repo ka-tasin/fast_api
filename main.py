@@ -65,8 +65,9 @@ def get_root():
 
 
 @app.post("/persons", response_model=Person)
-def create_person(person: Person):
+def create_person(person: PersonCreate):
         try: 
+            conn = None
             conn = getDBconnection()
             cursor = conn.cursor(cursor_factory=RealDictCursor)
 
@@ -91,6 +92,7 @@ def create_person(person: Person):
 @app.get("/persons", response_model=List[Person])
 def get_person():
     try:
+        conn = None
         conn = getDBconnection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
 
@@ -111,6 +113,7 @@ def get_person():
 @app.get("/persons/{person_id}", response_model=Person)
 def get_one_person(person_id: int):
     try:
+        conn = None
         conn = getDBconnection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
 
@@ -133,10 +136,11 @@ def get_one_person(person_id: int):
 @app.put("/person/{person_id}", response_model=Person)
 def update_person(person_id: int, updated_person: PersonUpdate):
     try:
+        conn = None
         conn = getDBconnection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
 
-        cursor.execute("SELECT * FROM persons WHERE id = %s", (person_id))
+        cursor.execute("SELECT * FROM persons WHERE id = %s", (person_id,))
         existing_person = cursor.fetchone()
 
         if not existing_person:
@@ -166,8 +170,6 @@ def update_person(person_id: int, updated_person: PersonUpdate):
 
         return Person(**updated)
     
-    except HTTPException:
-        raise
     except HTTPException as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
     finally:
@@ -180,6 +182,7 @@ def update_person(person_id: int, updated_person: PersonUpdate):
 @app.delete("/person/{person_id}")
 def delete_person(person_id: int):
     try:
+        conn = None
         conn = getDBconnection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
 
@@ -198,8 +201,6 @@ def delete_person(person_id: int):
             "deleted_person": Person(**deleted_person)
         }
     
-    except HTTPException:
-        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
     finally:
