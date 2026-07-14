@@ -6,6 +6,7 @@ from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 import os
 from contextlib import asynccontextmanager
+from llm_service import ask_llm
 
 load_dotenv()
 
@@ -209,9 +210,14 @@ def delete_person(person_id: int):
             conn.close()
 
 
+class ChatRequest(BaseModel):
+    message: str
 
-
-
-
-
-
+@app.post("/chat")
+def chat(request: ChatRequest):
+        try:
+            reply = ask_llm(request.message)
+            return {"reply": reply}
+        
+        except Exception as e:
+            raise HTTPException(status_code=500, detail= f"llm error: {str(e)}")
