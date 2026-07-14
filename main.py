@@ -222,8 +222,7 @@ def chat(request: ChatRequest):
             return {"reply": reply}
         
         except Exception as e:
-            raise HTTPException(status_code=500, detail= f"llm error: {str(e)}")
-
+            raise HTTPException(status_code=500, detail= f"llm error: {str(e)}")    
 
 @app.post("/chat/stream")
 def chat_stream(request: ChatRequest):
