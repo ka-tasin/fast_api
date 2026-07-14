@@ -8,6 +8,7 @@ import os
 from contextlib import asynccontextmanager
 from llm_service import ask_llm
 from fastapi.responses import StreamingResponse
+from llm_service import ask_llm_stream
 
 load_dotenv()
 
@@ -224,3 +225,9 @@ def chat(request: ChatRequest):
             raise HTTPException(status_code=500, detail= f"llm error: {str(e)}")
 
 
+@app.post("/chat/stream")
+def chat_stream(request: ChatRequest):
+    return StreamingResponse(
+        ask_llm_stream(request.message),
+        media_type = "text/plain"
+    )
