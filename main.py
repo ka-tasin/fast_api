@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 import os
 from contextlib import asynccontextmanager
 from llm_service import ask_llm
+from fastapi.responses import StreamingResponse
 
 load_dotenv()
 
@@ -221,3 +222,5 @@ def chat(request: ChatRequest):
         
         except Exception as e:
             raise HTTPException(status_code=500, detail= f"llm error: {str(e)}")
+
+
