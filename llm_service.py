@@ -2,6 +2,7 @@ from google import genai
 from dotenv import load_dotenv
 load_dotenv()
 import os
+from typing import List
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
  
@@ -22,6 +23,21 @@ def ask_llm(message: str) -> str:
         contents=message,
         config={"system_instruction": SYSTEM_PROMPT}
     )
+    return response.text
+
+# Ask LLM with history
+def ask_llm_with_history(history: List, message: str):
+    contents = []
+    for turn in history:
+        contents.append({"role": turn["role"], "parts": [{"text": turn["text"]}]})
+    contents.append({"role": "user", "parts": [{"text": message}]})
+
+    response = client.models.generate_content(
+        model="gemini-3.1-flash-lite",
+        contents=contents,
+        config={"system_instruction": SYSTEM_PROMPT}
+    )
+
     return response.text
 
 

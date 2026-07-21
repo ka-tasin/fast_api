@@ -6,9 +6,8 @@ from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 import os
 from contextlib import asynccontextmanager
-from llm_service import ask_llm
 from fastapi.responses import StreamingResponse
-from llm_service import ask_llm_stream
+from llm_service import ask_llm_stream, ask_llm_with_history, ask_llm
 
 load_dotenv()
 
@@ -26,6 +25,15 @@ class Person(BaseModel):
 class PersonUpdate(BaseModel):
     name: str
     age: int
+
+
+class Turn(BaseModel):
+    role: str
+    text: str
+
+class ChatWithHistoryRequest(BaseModel):
+    history: List[Turn]
+    message: str
 
 
 def getDBconnection():
@@ -230,3 +238,15 @@ def chat_stream(request: ChatRequest):
         ask_llm_stream(request.message),
         media_type = "text/plain"
     )
+
+@app.post("/chat/history")
+def chat_with_history(request:ChatWithHistoryRequest):
+    try:
+        history_dicts = [turn.dict() for turn in request.history]
+        reply = ask_llm_with_history(history_dicts, request.message)
+        return {"reply": reply} 
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail= f"llm error: {str(e)}")    
+
+
